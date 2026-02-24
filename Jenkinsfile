@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    ECR_REPO = '<Account-ID>.dkr.ecr.us-east-1.amazonaws.com/<app-repository>'
+    ECR_REPO = '751545121618.dkr.ecr.us-east-1.amazonaws.com/app-repository'
     IMAGE_TAG = "${env.BUILD_ID}"
     AWS_REGION = 'us-east-1'
   }
@@ -10,7 +10,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git branch: 'main', url: '<https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git>'
+        git branch: 'main', url: 'https://github.com/davido1692/OnePercent.git'
       }
     }
 

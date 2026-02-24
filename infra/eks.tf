@@ -98,7 +98,6 @@ resource "aws_security_group" "alb" {
 # Launch Template for EKS nodes
 resource "aws_launch_template" "eks_nodes" {
   name_prefix   = "eks-node-template-"
-  image_id      = "ami-03bc317f1e0c7d6c1" # Amazon EKS-optimized AMI for 1.31 in us-east-1
   instance_type = "t3.small"
 
   block_device_mappings {
@@ -108,25 +107,6 @@ resource "aws_launch_template" "eks_nodes" {
       volume_type = "gp3"
     }
   }
-
-  user_data = base64encode(<<-EOF
-#!/bin/bash
-set -ex
-
-# Get instance ID and use it to determine node number
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-NODE_NUMBER=$(echo $INSTANCE_ID | cut -d'-' -f2 | cut -c1)
-
-# Bootstrap the node with proper naming
-/etc/eks/bootstrap.sh eks-cluster \
-  --kubelet-extra-args '--node-labels=eks.amazonaws.com/nodegroup=eks-node-group,eks.amazonaws.com/nodegroup-image=ami-03bc317f1e0c7d6c1' \
-  --apiserver-endpoint '${aws_eks_cluster.main.endpoint}' \
-  --b64-cluster-ca '${aws_eks_cluster.main.certificate_authority[0].data}'
-
-# Set the node name
-hostnamectl set-hostname "Worker Node $NODE_NUMBER"
-EOF
-  )
 
   tag_specifications {
     resource_type = "instance"
@@ -167,7 +147,7 @@ resource "aws_eks_node_group" "main" {
   }
 
   # Use CUSTOM AMI type since we're specifying an AMI in the launch template
-  ami_type      = "CUSTOM"
+  ami_type      = "AL2_x86_64"
   capacity_type = "ON_DEMAND"
 
   # Use launch template

@@ -47,6 +47,11 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
 
 # ============================
 # KUBERNETES / HELM

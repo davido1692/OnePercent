@@ -1,0 +1,91 @@
+# ============================
+# OS / EDITOR FILES
+# ============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ============================
+# PYTHON
+# ============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+ENV/
+*.egg-info/
+
+# ============================
+# NODE
+# ============================
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+dist/
+build/
+
+# ============================
+# DOCKER
+# ============================
+*.tar
+docker-compose.override.yml
+
+# ============================
+# TERRAFORM
+# ============================
+**/.terraform/
+**/.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ============================
+# KUBERNETES / HELM
+# ============================
+charts/**/charts/
+charts/**/tmp/
+charts/**/values.yaml.backup
+*.release
+*.helmignore
+
+# ============================
+# JENKINS
+# ============================
+*.log
+workspace/
+secrets/
+credentials.xml
+secret.key
+secret.key.not-so-secret
+
+# ============================
+# LOGS / TEMP FILES
+# ============================
+*.log
+*.tmp
+*.out
+*.bak
+
+# ============================
+# ENVIRONMENT FILES
+# ============================
+.env
+.env.*
+*.tfvars
+*.tfvars.json
+
+# ============================
+# MISC
+# ============================
+*.zip
+*.tar.gz
+*.tgz

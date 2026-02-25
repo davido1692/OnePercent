@@ -24,7 +24,7 @@ resource "aws_instance" "jenkins_master" {
   instance_type          = "t3.small"
   subnet_id              = aws_subnet.public[0].id
   vpc_security_group_ids = [aws_security_group.jenkins_master.id]
-  key_name               = "1PU_key"
+  key_name               = "KeyToWealth"
 
   associate_public_ip_address = true
 

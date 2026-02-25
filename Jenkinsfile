@@ -40,6 +40,22 @@ pipeline {
       }
     }
 
+    stage('Configure kubeconfig') {
+  steps {
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+      sh '''
+        set -e
+        aws sts get-caller-identity
+        aws eks update-kubeconfig --region ${AWS_REGION} --name eks-cluster
+        kubectl get nodes
+      '''
+    }
+  }
+}
+
+
+    
+
     stage('Deploy with Helm') {
       steps {
         sh '''

@@ -31,6 +31,7 @@ pipeline {
             set -e
             aws --version
             aws sts get-caller-identity
+
             aws ecr get-login-password --region ${AWS_REGION} \
               | docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
@@ -41,31 +42,32 @@ pipeline {
     }
 
     stage('Configure kubeconfig') {
-  steps {
-    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-      sh '''
-        set -e
-        aws sts get-caller-identity
-        aws eks update-kubeconfig --region ${AWS_REGION} --name eks-cluster
-        kubectl get nodes
-      '''
+      steps {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+          sh '''
+            set -e
+            aws sts get-caller-identity
+            aws eks update-kubeconfig --region ${AWS_REGION} --name eks-cluster
+            kubectl get nodes
+          '''
+        }
+      }
     }
-  }
-}
-
-
-    
 
     stage('Deploy with Helm') {
       steps {
-        sh '''
-          set -e
-          helm version
-          helm upgrade --install hello-app ./helm-chart \
-            --namespace jenkins-deploy --create-namespace \
-            --set image.repository=${ECR_REPO} \
-            --set image.tag=${IMAGE_TAG}
-        '''
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+          sh '''
+            set -e
+            aws sts get-caller-identity
+            aws eks update-kubeconfig --region ${AWS_REGION} --name eks-cluster
+
+            helm upgrade --install hello-app ./helm-chart \
+              --namespace jenkins-deploy --create-namespace \
+              --set image.repository=${ECR_REPO} \
+              --set image.tag=${IMAGE_TAG}
+          '''
+        }
       }
     }
   }

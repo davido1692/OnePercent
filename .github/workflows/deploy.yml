@@ -90,7 +90,7 @@ jobs:
             -o jsonpath='{.items[0].metadata.name}')
 
           kubectl exec $POD -n $HELM_NAMESPACE -- \
-            wget -qO- http://localhost:8080/healthz | grep -q "OK"
+            python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')"
 
           echo "Smoke test passed"
 

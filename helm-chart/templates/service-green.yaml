@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-app-green
+  namespace: hello-app
+  labels:
+    {{- include "hello-app.labels" . | nindent 4 }}
+    slot: green
+spec:
+  type: ClusterIP
+  selector:
+    app: hello-app
+    slot: green
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8080

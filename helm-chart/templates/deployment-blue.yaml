@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hello-app.blue.fullname" . }}
+  namespace: hello-app
+  labels:
+    {{- include "hello-app.labels" . | nindent 4 }}
+    slot: blue
+spec:
+  replicas: {{ .Values.blue.replicas }}
+  selector:
+    matchLabels:
+      app: hello-app
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: hello-app
+        slot: blue
+    spec:
+      containers:
+        - name: hello-app
+          image: "{{ .Values.blue.image.repository }}:{{ .Values.blue.image.tag }}"
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

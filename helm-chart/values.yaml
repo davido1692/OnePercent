@@ -1,21 +1,26 @@
-replicaCount: 1
+activeSlot: blue
 
-image:
-  repository: 751545121618.dkr.ecr.us-east-1.amazonaws.com/app-repository
-  tag: latest
-  pullPolicy: IfNotPresent
+blue:
+  replicas: 1
+  image:
+    repository: 751545121618.dkr.ecr.us-east-1.amazonaws.com/app-repository
+    tag: latest
+
+green:
+  replicas: 1
+  image:
+    repository: 751545121618.dkr.ecr.us-east-1.amazonaws.com/app-repository
+    tag: latest
 
 service:
-  type: LoadBalancer
   port: 80
-  targetport: 8080
 
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 200m
+    cpu: 250m
     memory: 256Mi
 
 autoscaling:
@@ -23,20 +28,12 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 50
-
-serviceAccount:
-  create: false
-  automount: true
-httpRoute:
-  enabled: false
+  targetMemoryUtilizationPercentage: 50
 
 ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip

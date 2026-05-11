@@ -7,23 +7,35 @@ variable "region" {
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "dev"
+  default     = "prod"
 }
 
 variable "cluster_name" {
-  description = "Name of the EKS cluster"
+  description = "EKS cluster name"
   type        = string
   default     = "eks-cluster"
 }
 
-variable "node_group_name" {
-  description = "Name of the EKS node group"
+variable "node_instance_type" {
+  description = "EC2 instance type for worker nodes"
   type        = string
-  default     = "eks-node-group"
+  default     = "t3.small"
 }
 
-variable "node_name_pattern" {
-  description = "Pattern for naming EKS worker nodes"
-  type        = string
-  default     = "EKS-App-Worker Node"
-} 
+variable "node_desired_size" {
+  description = "Desired number of worker nodes"
+  type        = number
+  default     = 1
+}
+
+variable "node_min_size" {
+  description = "Minimum number of worker nodes"
+  type        = number
+  default     = 1
+}
+
+variable "node_max_size" {
+  description = "Maximum number of worker nodes"
+  type        = number
+  default     = 4
+}

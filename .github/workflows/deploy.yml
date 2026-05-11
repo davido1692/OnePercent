@@ -1,0 +1,106 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: app-repository
+  EKS_CLUSTER: eks-cluster
+  HELM_RELEASE: hello-app
+  HELM_NAMESPACE: hello-app
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, Push, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::751545121618:role/github-actions-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        id: build
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $IMAGE_URI ./app
+          docker push $IMAGE_URI
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+      - name: Configure kubeconfig
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
+
+      - name: Determine inactive slot
+        id: slot
+        run: |
+          ACTIVE=$(helm get values $HELM_RELEASE -n $HELM_NAMESPACE --all -o json 2>/dev/null \
+            | jq -r '.activeSlot // "blue"')
+
+          if [ "$ACTIVE" = "blue" ]; then
+            INACTIVE="green"
+          else
+            INACTIVE="blue"
+          fi
+
+          echo "active=$ACTIVE" >> $GITHUB_OUTPUT
+          echo "inactive=$INACTIVE" >> $GITHUB_OUTPUT
+          echo "Active slot: $ACTIVE — deploying to: $INACTIVE"
+
+      - name: Deploy to inactive slot
+        env:
+          IMAGE_URI: ${{ steps.build.outputs.image }}
+          INACTIVE: ${{ steps.slot.outputs.inactive }}
+        run: |
+          helm upgrade --install $HELM_RELEASE helm-chart \
+            --namespace $HELM_NAMESPACE \
+            --reuse-values \
+            --set $INACTIVE.image.repository=$(echo $IMAGE_URI | cut -d: -f1) \
+            --set $INACTIVE.image.tag=${{ github.sha }} \
+            --wait \
+            --timeout 5m
+
+      - name: Smoke test inactive slot
+        env:
+          INACTIVE: ${{ steps.slot.outputs.inactive }}
+        run: |
+          kubectl rollout status deployment/hello-app-$INACTIVE \
+            -n $HELM_NAMESPACE --timeout=3m
+
+          POD=$(kubectl get pod -n $HELM_NAMESPACE \
+            -l app=hello-app,slot=$INACTIVE \
+            -o jsonpath='{.items[0].metadata.name}')
+
+          kubectl exec $POD -n $HELM_NAMESPACE -- \
+            wget -qO- http://localhost:8080/healthz | grep -q "OK"
+
+          echo "Smoke test passed"
+
+      - name: Switch traffic to new slot
+        env:
+          INACTIVE: ${{ steps.slot.outputs.inactive }}
+        run: |
+          helm upgrade $HELM_RELEASE helm-chart \
+            --namespace $HELM_NAMESPACE \
+            --reuse-values \
+            --set activeSlot=$INACTIVE
+
+          echo "Traffic switched to $INACTIVE slot (image: ${{ github.sha }})"
